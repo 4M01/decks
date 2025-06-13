@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -211,7 +212,10 @@
             color: #4dabf7;
         }
 
-        .slide-10, .slide-11, .slide-12, .slide-13 {
+        .slide-10,
+        .slide-11,
+        .slide-12,
+        .slide-13 {
             background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
         }
 
@@ -251,6 +255,7 @@
                 transform: scale(1);
                 opacity: 1;
             }
+
             100% {
                 transform: scale(1.5);
                 opacity: 0;
@@ -258,6 +263,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="slide-counter">
         <span id="current-slide">1</span> / <span id="total-slides">13</span>
@@ -361,248 +367,122 @@
             </ul>
         </div>
 
-        <!-- Slide 10: Before Fixture - Example 1 -->
-        <div class="slide slide-10">
-            <h2>Before Fixture: Repetitive Login 😔</h2>
-            <div class="code-block">
-// test1.spec.js
-test('should view dashboard', async ({ page }) => {
-  await page.goto('/login');
-  await page.fill('#username', 'admin');
-  await page.fill('#password', 'password');
-  await page.click('#login-btn');
-  await page.waitForURL('/dashboard');
-  
-  // Actual test logic
-  await expect(page.locator('.dashboard-title')).toBeVisible();
-});
 
-// test2.spec.js
-test('should view profile', async ({ page }) => {
-  await page.goto('/login');
-  await page.fill('#username', 'admin');
-  await page.fill('#password', 'password');
-  await page.click('#login-btn');
-  await page.waitForURL('/dashboard');
-  
-  // Actual test logic
-  await page.click('#profile-link');
-  await expect(page.locator('.profile-header')).toBeVisible();
-});
-            </div>
+
+        <div class="navigation">
+            <button class="nav-button" id="prev-btn" onclick="previousSlide()">← Previous</button>
+            <button class="nav-button" id="next-btn" onclick="nextSlide()">Next →</button>
         </div>
 
-        <!-- Slide 11: After Fixture - Example 1 -->
-        <div class="slide slide-11">
-            <h2>After Fixture: Clean & Reusable 🎉</h2>
-            <div class="code-block">
-// fixtures.js
-export const test = base.extend({
-  authenticatedPage: async ({ page }, use) => {
-    await page.goto('/login');
-    await page.fill('#username', 'admin');
-    await page.fill('#password', 'password');
-    await page.click('#login-btn');
-    await page.waitForURL('/dashboard');
-    
-    await use(page);
-  }
-});
+        <script>
+            let currentSlide = 0;
+            const totalSlides = document.querySelectorAll('.slide').length;
+            const presentation = document.getElementById('presentation');
+            const currentSlideSpan = document.getElementById('current-slide');
+            const totalSlidesSpan = document.getElementById('total-slides');
+            let currentBulletPoint = 0;
 
-// test1.spec.js
-test('should view dashboard', async ({ authenticatedPage }) => {
-  await expect(authenticatedPage.locator('.dashboard-title')).toBeVisible();
-});
+            totalSlidesSpan.textContent = totalSlides;
 
-// test2.spec.js  
-test('should view profile', async ({ authenticatedPage }) => {
-  await authenticatedPage.click('#profile-link');
-  await expect(authenticatedPage.locator('.profile-header')).toBeVisible();
-});
-            </div>
-        </div>
-
-        <!-- Slide 12: Before Fixture - Example 2 -->
-        <div class="slide slide-12">
-            <h2>Before Fixture: Test Data Chaos 😵</h2>
-            <div class="code-block">
-// Multiple tests creating similar data
-test('should create user', async ({ page }) => {
-  const userData = {
-    name: 'John Doe',
-    email: 'john@example.com',
-    role: 'admin'
-  };
-  
-  await page.goto('/users/new');
-  await page.fill('#name', userData.name);
-  await page.fill('#email', userData.email);
-  await page.selectOption('#role', userData.role);
-  
-  // Test logic...
-});
-
-test('should edit user', async ({ page }) => {
-  // Same repetitive data setup...
-  const userData = {
-    name: 'John Doe',
-    email: 'john@example.com', 
-    role: 'admin'
-  };
-  
-  // Setup code repeated again...
-});
-            </div>
-        </div>
-
-        <!-- Slide 13: After Fixture - Example 2 -->
-        <div class="slide slide-13">
-            <h2>After Fixture: Smart Data Management 🚀</h2>
-            <div class="code-block">
-// fixtures.js
-export const test = base.extend({
-  testUser: async ({ page }, use) => {
-    const userData = {
-      name: 'John Doe',
-      email: `john-${Date.now()}@example.com`,
-      role: 'admin'
-    };
-    
-    // Create user via API
-    const response = await page.request.post('/api/users', {
-      data: userData
-    });
-    const user = await response.json();
-    
-    await use(user);
-    
-    // Cleanup after test
-    await page.request.delete(`/api/users/${user.id}`);
-  }
-});
-
-// Clean tests
-test('should display user in list', async ({ testUser, page }) => {
-  await page.goto('/users');
-  await expect(page.locator(`text=${testUser.name}`)).toBeVisible();
-});
-            </div>
-        </div>
-    </div>
-
-    <div class="navigation">
-        <button class="nav-button" id="prev-btn" onclick="previousSlide()">← Previous</button>
-        <button class="nav-button" id="next-btn" onclick="nextSlide()">Next →</button>
-    </div>
-
-    <script>
-        let currentSlide = 0;
-        const totalSlides = document.querySelectorAll('.slide').length;
-        const presentation = document.getElementById('presentation');
-        const currentSlideSpan = document.getElementById('current-slide');
-        const totalSlidesSpan = document.getElementById('total-slides');
-        let currentBulletPoint = 0;
-        
-        totalSlidesSpan.textContent = totalSlides;
-
-        function getCurrentSlideBullets() {
-            const currentSlideElement = document.querySelectorAll('.slide')[currentSlide];
-            return currentSlideElement.querySelectorAll('.bullet-points li');
-        }
-
-        function showNextBulletPoint() {
-            const bullets = getCurrentSlideBullets();
-            if (currentBulletPoint < bullets.length) {
-                bullets[currentBulletPoint].classList.add('visible');
-                currentBulletPoint++;
-                return true;
+            function getCurrentSlideBullets() {
+                const currentSlideElement = document.querySelectorAll('.slide')[currentSlide];
+                return currentSlideElement.querySelectorAll('.bullet-points li');
             }
-            return false;
-        }
 
-        function hideAllBulletPoints() {
-            const bullets = getCurrentSlideBullets();
-            bullets.forEach(bullet => bullet.classList.remove('visible'));
-            currentBulletPoint = 0;
-        }
-
-        function updateSlide() {
-            const translateX = -currentSlide * 100;
-            presentation.style.transform = `translateX(${translateX}vw)`;
-            currentSlideSpan.textContent = currentSlide + 1;
-            
-            // Reset bullet points for new slide
-            hideAllBulletPoints();
-            
-            // Update navigation buttons
-            document.getElementById('prev-btn').disabled = currentSlide === 0;
-            document.getElementById('next-btn').disabled = currentSlide === totalSlides - 1;
-        }
-
-        function nextSlide() {
-            if (currentSlide < totalSlides - 1) {
-                currentSlide++;
-                updateSlide();
+            function showNextBulletPoint() {
+                const bullets = getCurrentSlideBullets();
+                if (currentBulletPoint < bullets.length) {
+                    bullets[currentBulletPoint].classList.add('visible');
+                    currentBulletPoint++;
+                    return true;
+                }
+                return false;
             }
-        }
 
-        function previousSlide() {
-            if (currentSlide > 0) {
-                currentSlide--;
-                updateSlide();
+            function hideAllBulletPoints() {
+                const bullets = getCurrentSlideBullets();
+                bullets.forEach(bullet => bullet.classList.remove('visible'));
+                currentBulletPoint = 0;
             }
-        }
 
-        // Keyboard navigation
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowRight' || e.key === ' ') {
-                e.preventDefault();
-                nextSlide();
-            } else if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                previousSlide();
-            } else if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                // Show next bullet point, if no more bullets available, do nothing
-                showNextBulletPoint();
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                // Hide all bullet points and reset
+            function updateSlide() {
+                const translateX = -currentSlide * 100;
+                presentation.style.transform = `translateX(${translateX}vw)`;
+                currentSlideSpan.textContent = currentSlide + 1;
+
+                // Reset bullet points for new slide
                 hideAllBulletPoints();
-            } else if (e.key === 'Home') {
-                e.preventDefault();
-                currentSlide = 0;
-                updateSlide();
-            } else if (e.key === 'End') {
-                e.preventDefault();
-                currentSlide = totalSlides - 1;
-                updateSlide();
+
+                // Update navigation buttons
+                document.getElementById('prev-btn').disabled = currentSlide === 0;
+                document.getElementById('next-btn').disabled = currentSlide === totalSlides - 1;
             }
-        });
 
-        // Initialize
-        updateSlide();
-
-        // Add touch/swipe support for mobile
-        let startX = 0;
-        let endX = 0;
-
-        presentation.addEventListener('touchstart', (e) => {
-            startX = e.touches[0].clientX;
-        });
-
-        presentation.addEventListener('touchend', (e) => {
-            endX = e.changedTouches[0].clientX;
-            const deltaX = endX - startX;
-            
-            if (Math.abs(deltaX) > 50) { // Minimum swipe distance
-                if (deltaX > 0) {
-                    previousSlide();
-                } else {
-                    nextSlide();
+            function nextSlide() {
+                if (currentSlide < totalSlides - 1) {
+                    currentSlide++;
+                    updateSlide();
                 }
             }
-        });
-    </script>
+
+            function previousSlide() {
+                if (currentSlide > 0) {
+                    currentSlide--;
+                    updateSlide();
+                }
+            }
+
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight' || e.key === ' ') {
+                    e.preventDefault();
+                    nextSlide();
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    previousSlide();
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    // Show next bullet point, if no more bullets available, do nothing
+                    showNextBulletPoint();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    // Hide all bullet points and reset
+                    hideAllBulletPoints();
+                } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    currentSlide = 0;
+                    updateSlide();
+                } else if (e.key === 'End') {
+                    e.preventDefault();
+                    currentSlide = totalSlides - 1;
+                    updateSlide();
+                }
+            });
+
+            // Initialize
+            updateSlide();
+
+            // Add touch/swipe support for mobile
+            let startX = 0;
+            let endX = 0;
+
+            presentation.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].clientX;
+            });
+
+            presentation.addEventListener('touchend', (e) => {
+                endX = e.changedTouches[0].clientX;
+                const deltaX = endX - startX;
+
+                if (Math.abs(deltaX) > 50) { // Minimum swipe distance
+                    if (deltaX > 0) {
+                        previousSlide();
+                    } else {
+                        nextSlide();
+                    }
+                }
+            });
+        </script>
 </body>
+
 </html>
