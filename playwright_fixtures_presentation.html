@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Understanding the Magic of Playwright Fixtures</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .presentation-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .slide {
+            min-width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+            text-align: center;
+            position: relative;
+        }
+
+        .slide::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            z-index: -1;
+        }
+
+        .slide h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(45deg, #fff, #f0f8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .slide h2 {
+            font-size: 2.8rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: #f8f9fa;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4);
+        }
+
+        .slide h3 {
+            font-size: 1.8rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            color: #e9ecef;
+        }
+
+        .slide p {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            max-width: 900px;
+            color: #f1f3f4;
+        }
+
+        .subtitle {
+            font-size: 1.8rem;
+            color: #adb5bd;
+            margin-bottom: 3rem;
+        }
+
+        .presenter-info {
+            margin-top: 3rem;
+            font-size: 1.2rem;
+            color: #ced4da;
+        }
+
+        .bullet-points {
+            text-align: left;
+            max-width: 1000px;
+        }
+
+        .bullet-points li {
+            font-size: 1.4rem;
+            margin-bottom: 1.5rem;
+            padding-left: 1rem;
+            border-left: 4px solid #4dabf7;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem 1rem 1rem 2rem;
+            border-radius: 8px;
+            backdrop-filter: blur(5px);
+            list-style: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+
+        .bullet-points li.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1rem;
+            text-align: left;
+            max-width: 1000px;
+            backdrop-filter: blur(10px);
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .nav-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .nav-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .slide-counter {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 1rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .emoji {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .highlight-box {
+            background: rgba(255, 255, 255, 0.15);
+            border-left: 5px solid #4dabf7;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
+        }
+
+        .comparison-container {
+            display: flex;
+            gap: 3rem;
+            margin: 2rem 0;
+            max-width: 1200px;
+        }
+
+        .before-after {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .before-after h4 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #4dabf7;
+        }
+
+        .slide-10, .slide-11, .slide-12, .slide-13 {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+        }
+
+        .presentation-pointer {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            background: #ff6b6b;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1001;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 0 15px rgba(255, 107, 107, 0.6);
+            display: none;
+        }
+
+        .presentation-pointer.active {
+            opacity: 1;
+        }
+
+        .presentation-pointer::after {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
+            border: 2px solid rgba(255, 107, 107, 0.3);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-counter">
+        <span id="current-slide">1</span> / <span id="total-slides">13</span>
+    </div>
+
+    <div class="presentation-container" id="presentation">
+        <!-- Slide 1: Title Slide -->
+        <div class="slide">
+            <div class="emoji">🎯</div>
+            <h1>Understanding the Magic of Playwright Fixtures</h1>
+            <p class="subtitle">Supercharge Your Tests with Reusable Power</p>
+            <div class="presenter-info">
+                <p><strong>Presented by:</strong> Amol Chavan</p>
+                <p><strong>Date:</strong> June 14, 2025</p>
+            </div>
+        </div>
+
+        <!-- Slide 2: Why Bother with Fixtures? -->
+        <div class="slide">
+            <div class="emoji">🧱</div>
+            <h2>Why Bother with Fixtures?</h2>
+            <ul class="bullet-points">
+                <li>Stop repeating login/navigation/setup in every test</li>
+                <li>Increase modularity with reusable building blocks</li>
+                <li>Keep tests clean, DRY, and focused on outcomes</li>
+            </ul>
+        </div>
+
+        <!-- Slide 3: Isolation = Reliability -->
+        <div class="slide">
+            <div class="emoji">🧪</div>
+            <h2>Isolation = Reliability</h2>
+            <ul class="bullet-points">
+                <li>Fixtures run in scoped contexts—no test bleed-over!</li>
+                <li>Every test gets a clean slate</li>
+                <li>Parallel-friendly design for scaling test suites</li>
+            </ul>
+        </div>
+
+        <!-- Slide 4: Where's the "Magic"? -->
+        <div class="slide">
+            <div class="emoji">✨</div>
+            <h2>Where's the "Magic"?</h2>
+            <ul class="bullet-points">
+                <li>Internally, Playwright injects fixtures using dependency resolution</li>
+                <li>Seamless setup/teardown makes complex scenarios feel easy</li>
+                <li>Example: custom loginState fixture injected automatically!</li>
+            </ul>
+        </div>
+
+        <!-- Slide 5: Practical Patterns (1/2) -->
+        <div class="slide">
+            <div class="emoji">🔧</div>
+            <h2>Practical Patterns (1/2)</h2>
+            <ul class="bullet-points">
+                <li><strong>Auth Session:</strong> Pre-authenticate via API, persist state</li>
+                <li><strong>Test Data:</strong> Inject user/data factories for repeatability</li>
+            </ul>
+        </div>
+
+        <!-- Slide 6: Practical Patterns (2/2) -->
+        <div class="slide">
+            <div class="emoji">🔍</div>
+            <h2>Practical Patterns (2/2)</h2>
+            <ul class="bullet-points">
+                <li><strong>Page Objects:</strong> Pass in page-object fixtures for encapsulation</li>
+                <li><strong>Environment Variables:</strong> Use config files + dynamic fixtures</li>
+            </ul>
+        </div>
+
+        <!-- Slide 7: Common Pitfalls to Avoid -->
+        <div class="slide">
+            <div class="emoji">🚫</div>
+            <h2>Common Pitfalls to Avoid</h2>
+            <ul class="bullet-points">
+                <li>Mutating shared state across tests = 😱</li>
+                <li>Overloading fixtures with too much logic</li>
+                <li>Forgetting to teardown resources = memory leaks!</li>
+            </ul>
+        </div>
+
+        <!-- Slide 8: Best Practices -->
+        <div class="slide">
+            <div class="emoji">✅</div>
+            <h2>Best Practices</h2>
+            <ul class="bullet-points">
+                <li>Keep fixtures lean and focused</li>
+                <li>Use async where needed; leverage use() hook properly</li>
+                <li>Isolate by context, not just data</li>
+            </ul>
+        </div>
+
+        <!-- Slide 9: Recap & Takeaways -->
+        <div class="slide">
+            <div class="emoji">🔁</div>
+            <h2>Recap & Takeaways</h2>
+            <ul class="bullet-points">
+                <li>Reusability + isolation = stable, readable tests</li>
+                <li>Magic lies in automation behind setup/teardown</li>
+                <li>Patterns and pitfalls shape how fast you scale your test suite</li>
+            </ul>
+        </div>
+
+        <!-- Slide 10: Before Fixture - Example 1 -->
+        <div class="slide slide-10">
+            <h2>Before Fixture: Repetitive Login 😔</h2>
+            <div class="code-block">
+// test1.spec.js
+test('should view dashboard', async ({ page }) => {
+  await page.goto('/login');
+  await page.fill('#username', 'admin');
+  await page.fill('#password', 'password');
+  await page.click('#login-btn');
+  await page.waitForURL('/dashboard');
+  
+  // Actual test logic
+  await expect(page.locator('.dashboard-title')).toBeVisible();
+});
+
+// test2.spec.js
+test('should view profile', async ({ page }) => {
+  await page.goto('/login');
+  await page.fill('#username', 'admin');
+  await page.fill('#password', 'password');
+  await page.click('#login-btn');
+  await page.waitForURL('/dashboard');
+  
+  // Actual test logic
+  await page.click('#profile-link');
+  await expect(page.locator('.profile-header')).toBeVisible();
+});
+            </div>
+        </div>
+
+        <!-- Slide 11: After Fixture - Example 1 -->
+        <div class="slide slide-11">
+            <h2>After Fixture: Clean & Reusable 🎉</h2>
+            <div class="code-block">
+// fixtures.js
+export const test = base.extend({
+  authenticatedPage: async ({ page }, use) => {
+    await page.goto('/login');
+    await page.fill('#username', 'admin');
+    await page.fill('#password', 'password');
+    await page.click('#login-btn');
+    await page.waitForURL('/dashboard');
+    
+    await use(page);
+  }
+});
+
+// test1.spec.js
+test('should view dashboard', async ({ authenticatedPage }) => {
+  await expect(authenticatedPage.locator('.dashboard-title')).toBeVisible();
+});
+
+// test2.spec.js  
+test('should view profile', async ({ authenticatedPage }) => {
+  await authenticatedPage.click('#profile-link');
+  await expect(authenticatedPage.locator('.profile-header')).toBeVisible();
+});
+            </div>
+        </div>
+
+        <!-- Slide 12: Before Fixture - Example 2 -->
+        <div class="slide slide-12">
+            <h2>Before Fixture: Test Data Chaos 😵</h2>
+            <div class="code-block">
+// Multiple tests creating similar data
+test('should create user', async ({ page }) => {
+  const userData = {
+    name: 'John Doe',
+    email: 'john@example.com',
+    role: 'admin'
+  };
+  
+  await page.goto('/users/new');
+  await page.fill('#name', userData.name);
+  await page.fill('#email', userData.email);
+  await page.selectOption('#role', userData.role);
+  
+  // Test logic...
+});
+
+test('should edit user', async ({ page }) => {
+  // Same repetitive data setup...
+  const userData = {
+    name: 'John Doe',
+    email: 'john@example.com', 
+    role: 'admin'
+  };
+  
+  // Setup code repeated again...
+});
+            </div>
+        </div>
+
+        <!-- Slide 13: After Fixture - Example 2 -->
+        <div class="slide slide-13">
+            <h2>After Fixture: Smart Data Management 🚀</h2>
+            <div class="code-block">
+// fixtures.js
+export const test = base.extend({
+  testUser: async ({ page }, use) => {
+    const userData = {
+      name: 'John Doe',
+      email: `john-${Date.now()}@example.com`,
+      role: 'admin'
+    };
+    
+    // Create user via API
+    const response = await page.request.post('/api/users', {
+      data: userData
+    });
+    const user = await response.json();
+    
+    await use(user);
+    
+    // Cleanup after test
+    await page.request.delete(`/api/users/${user.id}`);
+  }
+});
+
+// Clean tests
+test('should display user in list', async ({ testUser, page }) => {
+  await page.goto('/users');
+  await expect(page.locator(`text=${testUser.name}`)).toBeVisible();
+});
+            </div>
+        </div>
+    </div>
+
+    <div class="navigation">
+        <button class="nav-button" id="prev-btn" onclick="previousSlide()">← Previous</button>
+        <button class="nav-button" id="next-btn" onclick="nextSlide()">Next →</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const totalSlides = document.querySelectorAll('.slide').length;
+        const presentation = document.getElementById('presentation');
+        const currentSlideSpan = document.getElementById('current-slide');
+        const totalSlidesSpan = document.getElementById('total-slides');
+        let currentBulletPoint = 0;
+        
+        totalSlidesSpan.textContent = totalSlides;
+
+        function getCurrentSlideBullets() {
+            const currentSlideElement = document.querySelectorAll('.slide')[currentSlide];
+            return currentSlideElement.querySelectorAll('.bullet-points li');
+        }
+
+        function showNextBulletPoint() {
+            const bullets = getCurrentSlideBullets();
+            if (currentBulletPoint < bullets.length) {
+                bullets[currentBulletPoint].classList.add('visible');
+                currentBulletPoint++;
+                return true;
+            }
+            return false;
+        }
+
+        function hideAllBulletPoints() {
+            const bullets = getCurrentSlideBullets();
+            bullets.forEach(bullet => bullet.classList.remove('visible'));
+            currentBulletPoint = 0;
+        }
+
+        function updateSlide() {
+            const translateX = -currentSlide * 100;
+            presentation.style.transform = `translateX(${translateX}vw)`;
+            currentSlideSpan.textContent = currentSlide + 1;
+            
+            // Reset bullet points for new slide
+            hideAllBulletPoints();
+            
+            // Update navigation buttons
+            document.getElementById('prev-btn').disabled = currentSlide === 0;
+            document.getElementById('next-btn').disabled = currentSlide === totalSlides - 1;
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides - 1) {
+                currentSlide++;
+                updateSlide();
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlide();
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === ' ') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                previousSlide();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                // Show next bullet point, if no more bullets available, do nothing
+                showNextBulletPoint();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                // Hide all bullet points and reset
+                hideAllBulletPoints();
+            } else if (e.key === 'Home') {
+                e.preventDefault();
+                currentSlide = 0;
+                updateSlide();
+            } else if (e.key === 'End') {
+                e.preventDefault();
+                currentSlide = totalSlides - 1;
+                updateSlide();
+            }
+        });
+
+        // Initialize
+        updateSlide();
+
+        // Add touch/swipe support for mobile
+        let startX = 0;
+        let endX = 0;
+
+        presentation.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+        });
+
+        presentation.addEventListener('touchend', (e) => {
+            endX = e.changedTouches[0].clientX;
+            const deltaX = endX - startX;
+            
+            if (Math.abs(deltaX) > 50) { // Minimum swipe distance
+                if (deltaX > 0) {
+                    previousSlide();
+                } else {
+                    nextSlide();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
